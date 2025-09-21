@@ -1,5 +1,15 @@
 #!/bin/bash
 
+#this script assumes that all of the files were downloaded and checked properly. I have another script to actually go through and double check that
+
+#the first thing to do, is to store the ls for the folder "fastq_files" into "dir_array" array, where each file name is stored as an element
+#the most optimal thing to do is to go by increasing size, but that would be an issue with ls. Instead, ls automatically outputs the file names alphanumerically
+#this means, that the array will look like this: [[sample1_1],[sample1_2],[sample2_1],[sample2_2]...[samplen_1],[samplen_2]]
+#array_length is then computed using wc -w on "dir_array"
+#the for loop is designed to filter through "dir_array" by acting only on even element indexes which by design will always index the first file for a sample pair
+#we do this by skipping a cycle if the modulo of our index is equal to 1
+#after that is completed, we can start working with pairs of samples by calling them via their sample names which are substrings of the element names
+
 dir_array=($(ls fastq_files))
 array_length=$( echo "${dir_array[@]}" | wc -w)
 for ((z=0;z<="$array_length";z++)); do
@@ -7,11 +17,11 @@ for ((z=0;z<="$array_length";z++)); do
 		continue
 	fi
 	let j=$z+1
-	file1="${dir_array[$z]}"
+	file1="${dir_array[$z]}" #this stores the first file from a sample pair of files to file1
 	echo "$file1"
-	file2="${dir_array[$j]}"
+	file2="${dir_array[$j]}" #this stores the second file from a sample pair of files to file2
 	echo "$file2"
-	genome_sample_number="${file1:0:11}"
+	genome_sample_number="${file1:0:11}" #this refers to the sample number and title of the sample by substringing the first 12 characters from the file names
 	echo "$genome_sample_number"
 	## continue what you want to do here:
 
@@ -54,6 +64,8 @@ for ((z=0;z<="$array_length";z++)); do
 	blastn -db nt -query <(echo "$blast_query") -remote \
 	-max_target_seqs 10 \
 	-out blast_results/"$genome_sample_number"_blast_results.out #this gives the top 10 matches and searches online through the NCBI -nt database
+
+	#use abricate to annotate through our contigs fasta file and identify AMR and virulence factor genes
 
 	#get my AMR genes!
 	mkdir -p AMR
